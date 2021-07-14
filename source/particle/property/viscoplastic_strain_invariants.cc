@@ -21,6 +21,7 @@
 #include <aspect/particle/property/viscoplastic_strain_invariants.h>
 #include <aspect/material_model/visco_plastic.h>
 #include <aspect/initial_composition/interface.h>
+#include <aspect/material_model/rheology/strain_dependent.h>
 
 
 namespace aspect
@@ -140,8 +141,22 @@ namespace aspect
         const double edot_ii = std::sqrt(std::fabs(second_invariant(deviator(material_inputs.strain_rate[0]))));
 
         // New strain is the old strain plus dt*edot_ii
-        const double new_strain = old_strain + dt*edot_ii;
+        double new_strain = old_strain + dt*edot_ii;
 
+        // Access things from the strain dependent rheology
+        const MaterialModel::Rheology::StrainDependent<dim> &strain_dependent
+          = Plugins::get_plugin_as_type<const MaterialModel::Rheology::StrainDependent<dim>>(this->get_material_model());
+
+        // Check that strain healing is currently active, then go ahead with calculation
+        if(strain_dependent.get_healing_mechanism() == aspect::MaterialModel::Rheology::temperature_dependent) 
+        {
+          // Compute strain healing, then apply it to the new strain for the particle
+          double healed_strain = strain_dependent.strain_healing_temperature_dependent_recovery_rate *
+                              std::exp(-strain_dependent.strain_healing_temperature_dependent_prefactor * 0.5 * 
+                              (1.0 - material_inputs.temperature[0]/strain_dependent.get_adiabatic_surface_temperature()))
+                              * this->get_timestep();
+          new_strain -= healed_strain;
+        }
 
         /* Once we know whether the particle underwent plastic, viscous, or
          * total strain assign the new strain to the correct data position.

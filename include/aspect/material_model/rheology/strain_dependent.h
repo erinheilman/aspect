@@ -158,6 +158,16 @@ namespace aspect
           HealingMechanism
           get_healing_mechanism () const;
 
+          /**
+           * The healing rate used in the temperature dependent strain healing model.
+           */
+          double strain_healing_temperature_dependent_recovery_rate;
+
+          /**
+           * A prefactor of viscosity used in the strain healing calculation.
+           */
+          double strain_healing_temperature_dependent_prefactor;
+
         private:
 
           WeakeningMechanism weakening_mechanism;
@@ -206,16 +216,6 @@ namespace aspect
            * the prescribed strain interval (viscous or total strain).
            */
           std::vector<double> viscous_strain_weakening_factors;
-
-          /**
-           * The healing rate used in the temperature dependent strain healing model.
-           */
-          double strain_healing_temperature_dependent_recovery_rate;
-
-          /**
-           * A prefactor of viscosity used in the strain healing calculation.
-           */
-          double strain_healing_temperature_dependent_prefactor;
       };
     }
   }
